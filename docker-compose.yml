@@ -1,0 +1,28 @@
+name: umbrel-stack
+
+services:
+  umbrel:
+    image: dockurr/umbrel@sha256:cd461d81df2b3393ddb780eb975738ed2f7d2f5755a2673e488b1a2ce9f0d22d
+    container_name: Umbrel
+    restart: unless-stopped
+    environment:
+      DOCKER_API_VERSION: "1.44"
+      NODE_ENV: production
+    ports:
+      - "8080:80"
+    volumes:
+      - C:/Umbrel:/data
+      - C:/Umbrel:/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./umbrel-core/docker-compose.yml:/opt/umbreld/source/modules/apps/legacy-compat/docker-compose.yml:ro
+    networks:
+      - docker_bridge
+      - umbrel_main_network
+
+networks:
+  docker_bridge:
+    external: true
+    name: bridge
+  umbrel_main_network:
+    external: true
+    name: umbrel_main_network
