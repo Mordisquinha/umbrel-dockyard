@@ -16,13 +16,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./umbrel-core/docker-compose.yml:/opt/umbreld/source/modules/apps/legacy-compat/docker-compose.yml:ro
     networks:
-      - docker_bridge
       - umbrel_main_network
 
 networks:
-  docker_bridge:
-    external: true
-    name: bridge
   umbrel_main_network:
     external: true
     name: umbrel_main_network
