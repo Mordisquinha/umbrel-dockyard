@@ -11,8 +11,12 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - C:/Umbrel:/data
-      - C:/Umbrel:/shared
+      - type: bind
+        source: C:\Umbrel
+        target: /data
+      - type: bind
+        source: C:\Umbrel
+        target: /shared
       - /var/run/docker.sock:/var/run/docker.sock
       - ./umbrel-core/docker-compose.yml:/opt/umbreld/source/modules/apps/legacy-compat/docker-compose.yml:ro
     networks:
