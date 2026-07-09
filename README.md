@@ -1,32 +1,88 @@
-# Umbrel Docker Stack
+# ☂️ Umbrel Dockyard
 
-Este repositório registra a estrutura Docker do Umbrel em `C:\Umbrel`.
-O container externo inicia o gerenciador do Umbrel, que restaura e administra os apps registrados:
+![Umbrel Dockyard logo](assets/umbrel-dockyard-logo.png)
 
-- Hermes Agent
-- Jellyfin
-- Obsidian
-- Ollama
+> **Uma pequena estação espacial para os seus containers.**
+> O Umbrel controla a base; Docker mantém os propulsores ligados; seus apps ficam em órbita e compartilham o mesmo hangar de arquivos.
 
-Todos os containers usam a rede `umbrel_main_network` e recebem `C:\Umbrel` em `/shared`.
+## O que está voando aqui?
 
-## Inicialização
+| Serviço | Porta | Função |
+| --- | ---: | --- |
+| Umbrel | `8080` | Painel de comando da estação |
+| Jellyfin | `8096` | Missões de streaming e biblioteca de mídia |
+| Obsidian | `3435` | Cofre de notas e ideias |
+| Ollama | `11434` | Motor local de IA |
+| Hermes Agent | `18790` | Console do agente |
 
-A rede precisa existir antes do primeiro `docker compose up`:
+Todos os containers participam da rede `umbrel_main_network` e montam `C:\Umbrel` em `/shared`. Em outras palavras: eles se encontram pelo DNS interno do Docker e têm acesso ao mesmo hangar de arquivos.
+
+```mermaid
+flowchart TD
+  U["☂️ Umbrel\nPainel de comando"] --> N["umbrel_main_network"]
+  N --> J["🎬 Jellyfin"]
+  N --> O["🧠 Ollama"]
+  N --> B["📝 Obsidian"]
+  N --> H["🤖 Hermes"]
+  S[("C:\\Umbrel\n/shared")] --- U
+  S --- J
+  S --- O
+  S --- B
+  S --- H
+```
+
+## Lançamento rápido
+
+Pré-requisitos: Docker Desktop em execução e PowerShell.
 
 ```powershell
+# Crie a rede somente na primeira vez.
 docker network create --driver bridge --subnet 10.21.0.0/16 --gateway 10.21.0.1 umbrel_main_network
+
+# Inicie a estação.
 docker compose up -d
 ```
 
-Se a rede já existir, ignore o erro de nome duplicado e execute apenas o segundo comando.
+Se a rede já existir, o Docker avisará — pode ignorar esse aviso e rodar apenas o segundo comando.
 
-O painel fica disponível em `http://localhost:8080` e o Jellyfin em `http://localhost:8096`.
+## Rotina de comandante
 
-## Estrutura
+```powershell
+# Verificar quem está acordado
+docker compose ps
 
-- `docker-compose.yml`: container externo do Umbrel.
-- `umbrel-core/docker-compose.yml`: serviços internos de autenticação e Tor com `/shared`.
-- `apps/*/docker-compose.yml`: cópias versionadas dos Compose dos apps customizados.
+# Acompanhar o diário de bordo
+docker compose logs -f
 
-Os dados persistentes permanecem em `C:\Umbrel` e não são versionados neste repositório.
+# Reiniciar só o Umbrel
+docker compose restart umbrel
+
+# Desligar a estação sem apagar dados
+docker compose down
+```
+
+Os dados vivem em `C:\Umbrel`, fora do repositório. Isso é intencional: o Git guarda a planta da estação, não a carga preciosa.
+
+## Arquivos importantes
+
+```text
+.
+├── docker-compose.yml             # Casco externo do Umbrel
+├── umbrel-core/
+│   └── docker-compose.yml         # Auth + Tor com acesso a /shared
+├── apps/
+│   ├── jellyfin/                  # Snapshot do Compose do Jellyfin
+│   ├── ollama/                    # Snapshot do Compose do Ollama
+│   ├── obsidian/                  # Snapshot do Compose do Obsidian
+│   └── hermes-agent/              # Snapshot do Compose do Hermes
+└── assets/
+    └── umbrel-dockyard-logo.png   # Emblema da estação
+```
+
+## ⚠️ Área restrita
+
+`/shared` é propositalmente poderoso: qualquer app conectado consegue ler e escrever em `C:\Umbrel`. É ótimo para automações e troca de arquivos; trate todos os apps instalados como partes confiáveis da mesma tripulação.
+
+---
+
+Construído para quem prefere hospedar a própria galáxia. ✨
