@@ -15,6 +15,7 @@ services:
       - PGID=1000
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/home/Documents/SecondBrain:/config/SecondBrain
       - /c/umbrel:/shared
     shm_size: 1gb
     container_name: obsidian_server_1
