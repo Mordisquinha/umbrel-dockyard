@@ -14,6 +14,7 @@
 | Obsidian | `3435` | Cofre de notas e ideias |
 | Ollama | `11434` | Motor local de IA |
 | Hermes Agent | `18790` | Console do agente |
+| qBittorrent | `8094` | Gerenciador de torrents e downloads categorizados |
 
 Todos os containers participam da rede `umbrel_main_network` e montam `C:\Umbrel` em `/shared`. Em outras palavras: eles se encontram pelo DNS interno do Docker e têm acesso ao mesmo hangar de arquivos.
 
@@ -24,11 +25,13 @@ flowchart TD
   N --> O["🧠 Ollama"]
   N --> B["📝 Obsidian"]
   N --> H["🤖 Hermes"]
+  N --> Q["🧲 qBittorrent"]
   S[("C:\\Umbrel\n/shared")] --- U
   S --- J
   S --- O
   S --- B
   S --- H
+  S --- Q
 ```
 
 ## Lançamento rápido
@@ -74,7 +77,8 @@ Os dados vivem em `C:\Umbrel`, fora do repositório. Isso é intencional: o Git 
 │   ├── jellyfin/                  # Snapshot do Compose do Jellyfin
 │   ├── ollama/                    # Snapshot do Compose do Ollama
 │   ├── obsidian/                  # Snapshot do Compose do Obsidian
-│   └── hermes-agent/              # Snapshot do Compose do Hermes
+│   ├── hermes-agent/              # Snapshot do Compose do Hermes
+│   └── qbittorrent/               # Snapshot do Compose do qBittorrent
 └── assets/
     └── umbrel-dockyard-logo.png   # Emblema da estação
 ```
