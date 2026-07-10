@@ -72,12 +72,36 @@ docker compose down
 
 Os dados vivem em `C:\Umbrel`, fora do repositório. Isso é intencional: o Git guarda a planta da estação, não a carga preciosa.
 
-O Pocket TTS fica disponível para o Windows em `http://localhost:8000` e, para os demais containers, em `http://pocket-tts:8000`. Os modelos e vozes baixados permanecem em `C:\Umbrel\app-data\pocket-tts`, enquanto `/shared` dá acesso ao mesmo volume dos outros serviços.
+O Pocket TTS fica disponível na rede local em `http://IP-DO-SERVIDOR:8000` e, para os demais containers, em `http://pocket-tts:8000`. Os modelos e vozes baixados permanecem em `C:\Umbrel\app-data\pocket-tts`, enquanto `/shared` dá acesso ao mesmo volume dos outros serviços.
 
 ```powershell
 # Gerar um WAV com a voz portuguesa padrão (Rafael)
 curl.exe -X POST -F "text=Olá, mundo." http://localhost:8000/tts -o fala.wav
 ```
+
+Para clonagem de voz, aceite os termos do modelo Pocket TTS no Hugging Face e defina `POCKET_TTS_HF_TOKEN` apenas no `.env` local. O token não é versionado.
+
+## Acesso pela rede local
+
+Os serviços são publicados pelo Docker para a máquina anfitriã. A partir de outro aparelho na mesma rede, use o IP LAN do computador e a porta do serviço — por exemplo, Jellyfin em `http://IP-DO-SERVIDOR:8096` (não `8086`).
+
+| Serviço | Endereço na rede local |
+| --- | --- |
+| Umbrel | `http://IP-DO-SERVIDOR:8080` |
+| Jellyfin | `http://IP-DO-SERVIDOR:8096` |
+| qBittorrent | `http://IP-DO-SERVIDOR:8094` |
+| Obsidian | `http://IP-DO-SERVIDOR:3435` |
+| Ollama | `http://IP-DO-SERVIDOR:11434` |
+| Hermes | `http://IP-DO-SERVIDOR:18790` |
+| Pocket TTS | `http://IP-DO-SERVIDOR:8000` |
+
+No Windows, abra um PowerShell **como Administrador** e execute uma vez:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-umbrel-lan-firewall.ps1
+```
+
+O script usa `UMBREL_LAN_SUBNET` do `.env`, cria regras de entrada restritas a essa rede e habilita também a descoberta do Jellyfin. Se ainda não houver acesso no celular ou TV, confirme que ambos estão na mesma sub-rede e que o roteador não está com isolamento de clientes/AP isolation ativado.
 
 ## Arquivos importantes
 

@@ -39,8 +39,11 @@ services:
       - --language
       - ${POCKET_TTS_LANGUAGE:-portuguese}
       - --quantize
+    environment:
+      # Optional Hugging Face token for the gated voice-cloning weights.
+      HF_TOKEN: ${POCKET_TTS_HF_TOKEN:-}
     ports:
-      - "${POCKET_TTS_BIND:-127.0.0.1}:${POCKET_TTS_PORT:-8000}:8000"
+      - "${POCKET_TTS_BIND:-0.0.0.0}:${POCKET_TTS_PORT:-8000}:8000"
     volumes:
       - type: bind
         source: ${UMBREL_ROOT}
