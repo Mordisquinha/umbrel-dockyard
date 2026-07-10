@@ -1,0 +1,6 @@
+* text=auto
+
+# These files execute inside Linux containers and must keep Unix line endings.
+hermes/bin/* text eol=lf
+*.sh text eol=lf
+*.py text eol=lf
