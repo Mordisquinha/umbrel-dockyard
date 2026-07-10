@@ -39,7 +39,7 @@ if (-not $isAdministrator) {
 }
 
 $group = 'Umbrel Dockyard'
-$tcpPorts = '8080,8094,8096,11434,18790,3435,8000'
+$tcpPorts = @(8080, 8094, 8096, 11434, 18790, 3435, 8000)
 
 Get-NetFirewallRule -Group $group -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 
