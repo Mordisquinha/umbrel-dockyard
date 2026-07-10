@@ -93,6 +93,15 @@ $HermesDataDir = Get-Setting -Name HERMES_DATA_DIR -Default '/opt/data'
 $script:HermesCli = Get-Setting -Name HERMES_CLI -Default '/opt/hermes/.venv/bin/hermes'
 $HermesPython = Get-Setting -Name HERMES_PYTHON -Default '/opt/hermes/.venv/bin/python'
 
+$HermesPrimaryProvider = Get-Setting -Name HERMES_PRIMARY_PROVIDER -Default 'openai-codex'
+$HermesPrimaryModel = Get-Setting -Name HERMES_PRIMARY_MODEL -Default 'gpt-5.6-luna'
+$HermesNvidiaProvider = Get-Setting -Name HERMES_NVIDIA_PROVIDER -Default 'nvidia'
+$HermesNvidiaModel = Get-Setting -Name HERMES_NVIDIA_FALLBACK_MODEL -Default 'openai/gpt-oss-120b'
+$HermesOllamaProvider = Get-Setting -Name HERMES_OLLAMA_PROVIDER -Default 'ollama'
+$HermesOllamaBaseUrl = Get-Setting -Name HERMES_OLLAMA_BASE_URL -Default 'http://ollama_ollama_1:11434/v1'
+$HermesOllamaModel = Get-Setting -Name HERMES_OLLAMA_MODEL -Default 'qwen3:4b-instruct'
+$HermesOllamaTimeout = Get-Setting -Name HERMES_OLLAMA_TIMEOUT -Default '900'
+
 $CuaHost = Get-Setting -Name CUA_SSH_HOST -Required
 $CuaPort = Get-Setting -Name CUA_SSH_PORT -Default '22'
 $CuaUser = Get-Setting -Name CUA_SSH_USER -Required
@@ -106,25 +115,28 @@ $QbtPassword = Get-Setting -Name QBITTORRENT_PASSWORD
 $QbtPasswordFile = Get-Setting -Name QBITTORRENT_PASSWORD_FILE -Default "$HermesDataDir/secrets/qbittorrent_password"
 $QbtTimeout = Get-Setting -Name QBITTORRENT_TIMEOUT -Default '15'
 
-Write-Host '[1/6] Validating Docker and containers...'
+Write-Host '[1/7] Validating Docker and containers...'
 & docker version *> $null
 if ($LASTEXITCODE -ne 0) { throw 'Docker is unavailable.' }
 Test-ContainerRunning -Name $script:HermesContainer
 if (-not $SkipRestart) { Test-ContainerRunning -Name $UmbrelContainer }
 
-Write-Host '[2/6] Installing versioned MCP assets in Hermes...'
+Write-Host '[2/7] Installing versioned Hermes assets...'
 Invoke-Docker -Arguments @('exec', $script:HermesContainer, 'mkdir', '-p',
-    "$HermesDataDir/bin", "$HermesDataDir/mcp", "$HermesDataDir/skills/media/qbittorrent", "$HermesDataDir/secrets")
+    "$HermesDataDir/bin", "$HermesDataDir/bootstrap", "$HermesDataDir/mcp",
+    "$HermesDataDir/skills/media/qbittorrent", "$HermesDataDir/secrets")
 Invoke-Docker -Arguments @('cp', (Join-Path $RepoRoot 'hermes/bin/cua-driver-windows-mcp'),
     "${script:HermesContainer}:$HermesDataDir/bin/cua-driver-windows-mcp")
 Invoke-Docker -Arguments @('cp', (Join-Path $RepoRoot 'hermes/mcp/qbittorrent_bridge.py'),
     "${script:HermesContainer}:$HermesDataDir/mcp/qbittorrent_bridge.py")
 Invoke-Docker -Arguments @('cp', (Join-Path $RepoRoot 'hermes/skills/blink-qbittorrent/SKILL.md'),
     "${script:HermesContainer}:$HermesDataDir/skills/media/qbittorrent/SKILL.md")
+Invoke-Docker -Arguments @('cp', (Join-Path $RepoRoot 'hermes/configure_model_fallbacks.py'),
+    "${script:HermesContainer}:$HermesDataDir/bootstrap/configure_model_fallbacks.py")
 Invoke-Docker -Arguments @('exec', $script:HermesContainer, 'chmod', '700',
     "$HermesDataDir/bin/cua-driver-windows-mcp")
 
-Write-Host '[3/6] Preparing local-only credentials...'
+Write-Host '[3/7] Preparing local-only credentials...'
 if (-not [string]::IsNullOrWhiteSpace($QbtPassword)) {
     Invoke-Docker -Arguments @('exec', '-i', $script:HermesContainer, 'sh', '-c',
         "umask 077; cat > '$QbtPasswordFile'") -InputText $QbtPassword
@@ -135,7 +147,7 @@ if (-not [string]::IsNullOrWhiteSpace($QbtPassword)) {
 }
 Invoke-Docker -Arguments @('exec', $script:HermesContainer, 'test', '-s', $CuaKey)
 
-Write-Host '[4/6] Registering MCP servers in Hermes...'
+Write-Host '[4/7] Registering MCP servers in Hermes...'
 Remove-McpIfPresent -Name 'cua-driver-windows'
 Invoke-Docker -Arguments @(
     'exec', '-i', $script:HermesContainer, $script:HermesCli, 'mcp', 'add', 'cua-driver-windows',
@@ -159,8 +171,24 @@ Invoke-Docker -Arguments @(
     '--args', "$HermesDataDir/mcp/qbittorrent_bridge.py"
 ) -InputText 'y'
 
+Write-Host '[5/7] Configuring primary and fallback models...'
+Invoke-Docker -Arguments @(
+    'exec',
+    '-e', "HERMES_CONFIG_PATH=$HermesDataDir/config.yaml",
+    '-e', "HERMES_PRIMARY_PROVIDER=$HermesPrimaryProvider",
+    '-e', "HERMES_PRIMARY_MODEL=$HermesPrimaryModel",
+    '-e', "HERMES_NVIDIA_PROVIDER=$HermesNvidiaProvider",
+    '-e', "HERMES_NVIDIA_FALLBACK_MODEL=$HermesNvidiaModel",
+    '-e', "HERMES_OLLAMA_PROVIDER=$HermesOllamaProvider",
+    '-e', "HERMES_OLLAMA_BASE_URL=$HermesOllamaBaseUrl",
+    '-e', "HERMES_OLLAMA_MODEL=$HermesOllamaModel",
+    '-e', "HERMES_OLLAMA_TIMEOUT=$HermesOllamaTimeout",
+    $script:HermesContainer, $HermesPython,
+    "$HermesDataDir/bootstrap/configure_model_fallbacks.py"
+)
+
 if (-not $SkipRestart) {
-    Write-Host '[5/6] Restarting Hermes through Umbrel...'
+    Write-Host '[6/7] Restarting Hermes through Umbrel...'
     Invoke-Docker -Arguments @(
         'exec', '-e', 'UMBREL_DATA_DIR=/c/umbrel', $UmbrelContainer,
         '/opt/umbreld/node_modules/.bin/tsx', '/opt/umbreld/source/cli.ts',
@@ -174,11 +202,20 @@ if (-not $SkipRestart) {
     } until ($running -or (Get-Date) -gt $deadline)
     if (-not $running) { throw 'Hermes did not return after restart.' }
 } else {
-    Write-Host '[5/6] Restart skipped.'
+    Write-Host '[6/7] Restart skipped.'
 }
 
 if (-not $SkipTests) {
-    Write-Host '[6/6] Testing MCP discovery...'
+    Write-Host '[7/7] Testing model routing and MCP discovery...'
+    $fallbackList = Invoke-Docker -Arguments @(
+        'exec', $script:HermesContainer, $script:HermesCli, 'fallback', 'list'
+    ) -Capture
+    Write-Host $fallbackList
+    foreach ($expected in @($HermesPrimaryModel, $HermesNvidiaModel, $HermesOllamaModel)) {
+        if ($fallbackList -notmatch [regex]::Escape($expected)) {
+            throw "Model routing validation failed: '$expected' is missing."
+        }
+    }
     foreach ($server in @('cua-driver-windows', 'torrentclaw', 'qbittorrent')) {
         Write-Host "      Testing $server..."
         $testResult = Invoke-Docker -Arguments @(
@@ -191,9 +228,9 @@ if (-not $SkipTests) {
         }
     }
 } else {
-    Write-Host '[6/6] Tests skipped.'
+    Write-Host '[7/7] Tests skipped.'
 }
 
 Write-Host ''
-Write-Host 'Hermes MCP bootstrap completed successfully.'
+Write-Host 'Hermes MCP and model-routing bootstrap completed successfully.'
 Invoke-Docker -Arguments @('exec', $script:HermesContainer, $script:HermesCli, 'mcp', 'list')

@@ -12,7 +12,8 @@ services:
     image: ollama/ollama:0.31.1@sha256:f1a705f2bd113fb8d15f85f7c217f0dc5f6bebda6b0cc42b82c3ad165ffcb9dc
     environment:
       OLLAMA_ORIGINS: "*"
-      OLLAMA_CONTEXT_LENGTH: 8192
+      # 32k fits Hermes' current prompt while remaining viable on this host.
+      OLLAMA_CONTEXT_LENGTH: 32768
     volumes:
       - ${APP_DATA_DIR}/data:/root/.ollama
       - C:\SecondBrain:/SecondBrain
