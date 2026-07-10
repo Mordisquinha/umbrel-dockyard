@@ -31,6 +31,11 @@ if ([string]::IsNullOrWhiteSpace($LanSubnet)) {
     throw 'Defina UMBREL_LAN_SUBNET no .env ou informe -LanSubnet, por exemplo 192.168.1.0/24.'
 }
 
+$lanSubnets = @($LanSubnet -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+if ($lanSubnets.Count -eq 0) {
+    throw 'Informe ao menos uma sub-rede válida.'
+}
+
 $isAdministrator = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator
 )
@@ -51,7 +56,7 @@ New-NetFirewallRule `
     -Profile Public,Private `
     -Protocol TCP `
     -LocalPort $tcpPorts `
-    -RemoteAddress $LanSubnet `
+    -RemoteAddress $lanSubnets `
     -Description 'Permite os serviços publicados pelo Umbrel Dockyard somente na rede local.' | Out-Null
 
 New-NetFirewallRule `
@@ -62,10 +67,10 @@ New-NetFirewallRule `
     -Profile Public,Private `
     -Protocol UDP `
     -LocalPort 7359 `
-    -RemoteAddress $LanSubnet `
+    -RemoteAddress $lanSubnets `
     -Description 'Permite a descoberta do Jellyfin somente na rede local.' | Out-Null
 
-Write-Host "Regras aplicadas para $LanSubnet." -ForegroundColor Green
+Write-Host "Regras aplicadas para $($lanSubnets -join ', ')." -ForegroundColor Green
 Get-NetFirewallRule -Group $group | Get-NetFirewallPortFilter |
     Select-Object Protocol, LocalPort, RemoteAddress |
     Format-Table -AutoSize

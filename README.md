@@ -101,7 +101,7 @@ No Windows, abra um PowerShell **como Administrador** e execute uma vez:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-umbrel-lan-firewall.ps1
 ```
 
-O script usa `UMBREL_LAN_SUBNET` do `.env`, cria regras de entrada restritas a essa rede e habilita também a descoberta do Jellyfin. Se ainda não houver acesso no celular ou TV, confirme que ambos estão na mesma sub-rede e que o roteador não está com isolamento de clientes/AP isolation ativado.
+O script usa `UMBREL_LAN_SUBNET` do `.env` (aceita uma ou mais sub-redes, separadas por vírgula), cria regras de entrada restritas a elas e habilita também a descoberta do Jellyfin. Se ainda não houver acesso no celular ou TV, confirme que ambos estão na mesma sub-rede e que o roteador não está com isolamento de clientes/AP isolation ativado.
 
 ## Arquivos importantes
 
