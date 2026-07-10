@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+: "${CUA_SSH_HOST:?CUA_SSH_HOST is required}"
+: "${CUA_SSH_USER:?CUA_SSH_USER is required}"
+: "${CUA_SSH_KEY:?CUA_SSH_KEY is required}"
+: "${CUA_WINDOWS_EXECUTABLE:?CUA_WINDOWS_EXECUTABLE is required}"
+
+CUA_SSH_PORT="${CUA_SSH_PORT:-22}"
+REMOTE_COMMAND="\"${CUA_WINDOWS_EXECUTABLE}\" mcp"
+
+exec /usr/bin/ssh \
+  -T \
+  -p "$CUA_SSH_PORT" \
+  -i "$CUA_SSH_KEY" \
+  -o IdentitiesOnly=yes \
+  -o BatchMode=yes \
+  -o StrictHostKeyChecking=accept-new \
+  "${CUA_SSH_USER}@${CUA_SSH_HOST}" \
+  "$REMOTE_COMMAND"

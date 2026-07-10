@@ -90,3 +90,17 @@ Os dados vivem em `C:\Umbrel`, fora do repositório. Isso é intencional: o Git 
 ---
 
 Construído para quem prefere hospedar a própria galáxia. ✨
+
+## Bootstrap dos MCPs do Blink
+
+O repositório também contém um entrypoint único para instalar e registrar no Hermes os servidores `cua-driver-windows`, `torrentclaw` e `qbittorrent`. O bridge seguro do qBittorrent e a skill de operação do Blink são copiados de `hermes/` para o volume persistente do agente.
+
+```powershell
+Copy-Item .env.example .env
+# Edite .env somente com os valores desta máquina.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/setup-hermes-mcps.ps1
+```
+
+O script é idempotente: atualiza os assets, recria os registros MCP, reinicia o Hermes pelo Umbrel e testa os três servidores. Use `-SkipRestart` ou `-SkipTests` quando precisar executar apenas parte da rotina.
+
+O `.env` nunca é versionado. Apenas `.env.example`, sem credenciais nem caminhos pessoais, faz parte do Git. Se `QBITTORRENT_PASSWORD` ficar vazio, o script preserva o segredo já instalado no volume do Hermes; em uma instalação nova, preencha-o localmente apenas durante o bootstrap e remova o valor do arquivo depois.
