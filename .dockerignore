@@ -1,0 +1,10 @@
+.git
+**/.git
+.env
+work
+outputs
+assets
+apps
+hermes
+scripts
+umbrel-core

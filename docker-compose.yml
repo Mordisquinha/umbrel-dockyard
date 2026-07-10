@@ -12,13 +12,58 @@ services:
       - "8080:80"
     volumes:
       - type: bind
-        source: C:\Umbrel
+        source: ${UMBREL_ROOT}
         target: /data
       - type: bind
-        source: C:\Umbrel
+        source: ${UMBREL_ROOT}
         target: /shared
       - /var/run/docker.sock:/var/run/docker.sock
       - ./umbrel-core/docker-compose.yml:/opt/umbreld/source/modules/apps/legacy-compat/docker-compose.yml:ro
+    networks:
+      - umbrel_main_network
+
+  pocket-tts:
+    build:
+      # Git submodule pinned to Pocket TTS v2.1.0 (commit 0588865).
+      context: .
+      dockerfile: docker/pocket-tts/Dockerfile
+    image: pocket-tts:2.1.0
+    container_name: pocket-tts
+    restart: unless-stopped
+    command:
+      - serve
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --language
+      - ${POCKET_TTS_LANGUAGE:-portuguese}
+      - --quantize
+    ports:
+      - "${POCKET_TTS_BIND:-127.0.0.1}:${POCKET_TTS_PORT:-8000}:8000"
+    volumes:
+      - type: bind
+        source: ${UMBREL_ROOT}
+        target: /shared
+      - type: bind
+        source: ${POCKET_TTS_CACHE_DIR}
+        target: /root/.cache/pocket_tts
+      - type: bind
+        source: ${POCKET_TTS_HF_CACHE_DIR}
+        target: /root/.cache/huggingface
+    healthcheck:
+      test:
+        - CMD
+        - uv
+        - run
+        - --no-sync
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 10m
     networks:
       - umbrel_main_network
 

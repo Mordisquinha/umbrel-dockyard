@@ -15,6 +15,7 @@
 | Ollama | `11434` | Motor local de IA |
 | Hermes Agent | `18790` | Console do agente |
 | qBittorrent | `8094` | Gerenciador de torrents e downloads categorizados |
+| Pocket TTS | `8000` | Síntese de voz local em português, executada em CPU |
 
 Todos os containers participam da rede `umbrel_main_network` e montam `C:\Umbrel` em `/shared`. Em outras palavras: eles se encontram pelo DNS interno do Docker e têm acesso ao mesmo hangar de arquivos.
 
@@ -26,12 +27,14 @@ flowchart TD
   N --> B["📝 Obsidian"]
   N --> H["🤖 Hermes"]
   N --> Q["🧲 qBittorrent"]
+  N --> T["🗣️ Pocket TTS"]
   S[("C:\\Umbrel\n/shared")] --- U
   S --- J
   S --- O
   S --- B
   S --- H
   S --- Q
+  S --- T
 ```
 
 ## Lançamento rápido
@@ -39,6 +42,9 @@ flowchart TD
 Pré-requisitos: Docker Desktop em execução e PowerShell.
 
 ```powershell
+# Baixe o Pocket TTS fixado no commit usado por este projeto.
+git submodule update --init --recursive
+
 # Crie a rede somente na primeira vez.
 docker network create --driver bridge --subnet 10.21.0.0/16 --gateway 10.21.0.1 umbrel_main_network
 
@@ -66,6 +72,13 @@ docker compose down
 
 Os dados vivem em `C:\Umbrel`, fora do repositório. Isso é intencional: o Git guarda a planta da estação, não a carga preciosa.
 
+O Pocket TTS fica disponível para o Windows em `http://localhost:8000` e, para os demais containers, em `http://pocket-tts:8000`. Os modelos e vozes baixados permanecem em `C:\Umbrel\app-data\pocket-tts`, enquanto `/shared` dá acesso ao mesmo volume dos outros serviços.
+
+```powershell
+# Gerar um WAV com a voz portuguesa padrão (Rafael)
+curl.exe -X POST -F "text=Olá, mundo." http://localhost:8000/tts -o fala.wav
+```
+
 ## Arquivos importantes
 
 ```text
@@ -73,6 +86,10 @@ Os dados vivem em `C:\Umbrel`, fora do repositório. Isso é intencional: o Git 
 ├── docker-compose.yml             # Casco externo do Umbrel
 ├── umbrel-core/
 │   └── docker-compose.yml         # Auth + Tor com acesso a /shared
+├── docker/
+│   └── pocket-tts/                 # Imagem CPU reproduzível do Pocket TTS
+├── vendor/
+│   └── pocket-tts/                 # Submódulo upstream fixado na v2.1.0
 ├── apps/
 │   ├── jellyfin/                  # Snapshot do Compose do Jellyfin
 │   ├── ollama/                    # Snapshot do Compose do Ollama
