@@ -1,15 +1,16 @@
 version: "3.7"
 services:
   app_proxy:
+    restart: always
     environment:
-      APP_HOST: hermes-agent_web_1
+      APP_HOST: Hermes-Agent
       APP_PORT: 18789
-    container_name: hermes-agent_app_proxy_1
+    container_name: Hermes-Agent-Proxy
     volumes:
       - /c/umbrel:/shared
   web:
     image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.7.1@sha256:a73320ac0c865543251aad2edacb21d38f9abf0769ec8a14179454c9936807ef
-    restart: on-failure
+    restart: always
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/hermes:/opt/data
@@ -26,4 +27,4 @@ services:
     command:
       - gateway
       - run
-    container_name: hermes-agent_web_1
+    container_name: Hermes-Agent

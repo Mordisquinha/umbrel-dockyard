@@ -1,15 +1,16 @@
 version: "3.7"
 services:
   app_proxy:
+    restart: always
     environment:
-      APP_HOST: obsidian_server_1
+      APP_HOST: Obsidian
       APP_PORT: 3000
-    container_name: obsidian_app_proxy_1
+    container_name: Obsidian-Proxy
     volumes:
       - /c/umbrel:/shared
   server:
     image: linuxserver/obsidian:1.8.10@sha256:b85e75e572e75f5e00062fb564102eaad8e19970938ee8ec7bae0a96566c1400
-    restart: on-failure
+    restart: always
     environment:
       - PUID=1000
       - PGID=1000
@@ -18,4 +19,4 @@ services:
       - ${UMBREL_ROOT}/home/Documents/SecondBrain:/config/SecondBrain
       - /c/umbrel:/shared
     shm_size: 1gb
-    container_name: obsidian_server_1
+    container_name: Obsidian

@@ -86,19 +86,23 @@ function Remove-McpIfPresent {
 
 Import-DotEnv -Path $EnvFile
 
-$script:HermesContainer = Get-Setting -Name HERMES_CONTAINER -Default 'hermes-agent_web_1'
+$script:HermesContainer = Get-Setting -Name HERMES_CONTAINER -Default 'Hermes-Agent'
 $UmbrelContainer = Get-Setting -Name UMBREL_CONTAINER -Default 'Umbrel'
 $HermesAppId = Get-Setting -Name HERMES_APP_ID -Default 'hermes-agent'
 $HermesDataDir = Get-Setting -Name HERMES_DATA_DIR -Default '/opt/data'
 $script:HermesCli = Get-Setting -Name HERMES_CLI -Default '/opt/hermes/.venv/bin/hermes'
 $HermesPython = Get-Setting -Name HERMES_PYTHON -Default '/opt/hermes/.venv/bin/python'
+$PlaywrightMcpContainer = Get-Setting -Name PLAYWRIGHT_MCP_CONTAINER -Default 'MCP-Playwright'
+$PlaywrightMcpUrl = Get-Setting -Name PLAYWRIGHT_MCP_URL -Default 'http://MCP-Playwright:8931/mcp'
+$SenadoMcpContainer = Get-Setting -Name SENADO_MCP_CONTAINER -Default 'MCP-Senado-BR'
+$SenadoMcpUrl = Get-Setting -Name SENADO_MCP_URL -Default 'http://MCP-Senado-BR:8000/mcp'
 
 $HermesPrimaryProvider = Get-Setting -Name HERMES_PRIMARY_PROVIDER -Default 'openai-codex'
 $HermesPrimaryModel = Get-Setting -Name HERMES_PRIMARY_MODEL -Default 'gpt-5.6-luna'
 $HermesNvidiaProvider = Get-Setting -Name HERMES_NVIDIA_PROVIDER -Default 'nvidia'
 $HermesNvidiaModel = Get-Setting -Name HERMES_NVIDIA_FALLBACK_MODEL -Default 'openai/gpt-oss-120b'
 $HermesOllamaProvider = Get-Setting -Name HERMES_OLLAMA_PROVIDER -Default 'ollama'
-$HermesOllamaBaseUrl = Get-Setting -Name HERMES_OLLAMA_BASE_URL -Default 'http://ollama_ollama_1:11434/v1'
+$HermesOllamaBaseUrl = Get-Setting -Name HERMES_OLLAMA_BASE_URL -Default 'http://Ollama:11434/v1'
 $HermesOllamaModel = Get-Setting -Name HERMES_OLLAMA_MODEL -Default 'qwen3:4b-instruct'
 $HermesOllamaTimeout = Get-Setting -Name HERMES_OLLAMA_TIMEOUT -Default '900'
 
@@ -109,7 +113,7 @@ $CuaKey = Get-Setting -Name CUA_SSH_KEY -Required
 $CuaExecutable = Get-Setting -Name CUA_WINDOWS_EXECUTABLE -Required
 $TorrentClawVersion = Get-Setting -Name TORRENTCLAW_VERSION -Default '0.2.1'
 
-$QbtBaseUrl = Get-Setting -Name QBITTORRENT_BASE_URL -Default 'http://qbittorrent_server_1:8080'
+$QbtBaseUrl = Get-Setting -Name QBITTORRENT_BASE_URL -Default 'http://qBittorrent:8080'
 $QbtUsername = Get-Setting -Name QBITTORRENT_USERNAME -Default 'admin'
 $QbtPassword = Get-Setting -Name QBITTORRENT_PASSWORD
 $QbtPasswordFile = Get-Setting -Name QBITTORRENT_PASSWORD_FILE -Default "$HermesDataDir/secrets/qbittorrent_password"
@@ -119,6 +123,8 @@ Write-Host '[1/7] Validating Docker and containers...'
 & docker version *> $null
 if ($LASTEXITCODE -ne 0) { throw 'Docker is unavailable.' }
 Test-ContainerRunning -Name $script:HermesContainer
+Test-ContainerRunning -Name $PlaywrightMcpContainer
+Test-ContainerRunning -Name $SenadoMcpContainer
 if (-not $SkipRestart) { Test-ContainerRunning -Name $UmbrelContainer }
 
 Write-Host '[2/7] Installing versioned Hermes assets...'
@@ -161,6 +167,18 @@ Invoke-Docker -Arguments @(
     'exec', '-i', $script:HermesContainer, $script:HermesCli, 'mcp', 'add', 'torrentclaw',
     '--command', 'npx', '--args', '-y', "@torrentclaw/mcp@$TorrentClawVersion"
 ) -InputText 'y'
+
+Remove-McpIfPresent -Name 'playwright'
+Invoke-Docker -Arguments @(
+    'exec', '-i', $script:HermesContainer, $script:HermesCli, 'mcp', 'add', 'playwright',
+    '--url', $PlaywrightMcpUrl
+) -InputText "n`ny"
+
+Remove-McpIfPresent -Name 'senado-br'
+Invoke-Docker -Arguments @(
+    'exec', '-i', $script:HermesContainer, $script:HermesCli, 'mcp', 'add', 'senado-br',
+    '--url', $SenadoMcpUrl
+) -InputText "n`ny"
 
 Remove-McpIfPresent -Name 'qbittorrent'
 Invoke-Docker -Arguments @(
@@ -216,7 +234,7 @@ if (-not $SkipTests) {
             throw "Model routing validation failed: '$expected' is missing."
         }
     }
-    foreach ($server in @('cua-driver-windows', 'torrentclaw', 'qbittorrent')) {
+    foreach ($server in @('cua-driver-windows', 'torrentclaw', 'playwright', 'senado-br', 'qbittorrent')) {
         Write-Host "      Testing $server..."
         $testResult = Invoke-Docker -Arguments @(
             'exec', $script:HermesContainer, $script:HermesCli, 'mcp', 'test', $server

@@ -4,7 +4,7 @@ services:
   umbrel:
     image: dockurr/umbrel@sha256:cd461d81df2b3393ddb780eb975738ed2f7d2f5755a2673e488b1a2ce9f0d22d
     container_name: Umbrel
-    restart: unless-stopped
+    restart: always
     environment:
       DOCKER_API_VERSION: "1.44"
       NODE_ENV: production
@@ -28,8 +28,8 @@ services:
       context: .
       dockerfile: docker/pocket-tts/Dockerfile
     image: pocket-tts:2.1.0
-    container_name: pocket-tts
-    restart: unless-stopped
+    container_name: Pocket-TTS
+    restart: always
     command:
       - serve
       - --host

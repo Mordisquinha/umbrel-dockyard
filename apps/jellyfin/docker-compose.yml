@@ -1,16 +1,17 @@
 version: "3.7"
 services:
   app_proxy:
+    restart: always
     environment:
-      APP_HOST: jellyfin_server_1
+      APP_HOST: Jellyfin
       APP_PORT: 8096
       PROXY_AUTH_ADD: "false"
-    container_name: jellyfin_app_proxy_1
+    container_name: Jellyfin-Proxy
     volumes:
       - /c/umbrel:/shared
   server:
     image: linuxserver/jellyfin:10.11.11@sha256:c123ef2f82195e377d8ca3df275f13f9dfa5c6e61b195958662b42b5e54362ab
-    restart: on-failure
+    restart: always
     hostname: ${DEVICE_HOSTNAME}
     environment:
       - PUID=1000
@@ -21,4 +22,4 @@ services:
       - /c/umbrel:/shared
     ports:
       - 7359:7359/udp
-    container_name: jellyfin_server_1
+    container_name: Jellyfin

@@ -1,0 +1,46 @@
+name: mcp-servers
+
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright/mcp@sha256:3d871c22ea2d4cca0966e2cfb1860e1cb03eb7353725a3d6cffd133296fb04eb
+    container_name: MCP-Playwright
+    restart: always
+    init: true
+    shm_size: 1gb
+    entrypoint: ["node"]
+    command:
+      - /app/cli.js
+      - --headless
+      - --browser
+      - chromium
+      - --no-sandbox
+      - --host
+      - 0.0.0.0
+      - --allowed-hosts
+      - MCP-Playwright:8931,localhost:8931,127.0.0.1:8931
+      - --port
+      - "8931"
+    expose:
+      - "8931"
+    networks:
+      - umbrel_main_network
+
+  senado-br:
+    image: nginxinc/nginx-unprivileged@sha256:0a7658b1a51df663ad17cfe82ab6edd7f56f82cfe7b49f282f83a30617f3f404
+    container_name: MCP-Senado-BR
+    restart: always
+    volumes:
+      - ./senado-br-mcp.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - umbrel_main_network
+
+networks:
+  umbrel_main_network:
+    external: true
+    name: umbrel_main_network

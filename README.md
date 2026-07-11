@@ -132,9 +132,17 @@ O script usa `UMBREL_LAN_SUBNET` do `.env` (aceita uma ou mais sub-redes, separa
 
 Construído para quem prefere hospedar a própria galáxia. ✨
 
+## MCPs isolados
+
+Os MCPs que precisam de containers ficam na instância Compose `mcp-servers`, separada da pilha Umbrel: `MCP-Playwright` e `MCP-Senado-BR`. Os MCPs por processo local continuam sob responsabilidade do `Hermes-Agent`.
+
+```powershell
+docker compose -f ./mcp-servers/docker-compose.yml up -d
+```
+
 ## Bootstrap dos MCPs do Blink
 
-O repositório também contém um entrypoint único para instalar e registrar no Hermes os servidores `cua-driver-windows`, `torrentclaw` e `qbittorrent`. O bridge seguro do qBittorrent e a skill de operação do Blink são copiados de `hermes/` para o volume persistente do agente. O mesmo bootstrap configura a cadeia de modelos `GPT 5.6 Luna → NVIDIA GPT-OSS 120B → Ollama local`.
+O repositório também contém um entrypoint único para instalar e registrar no Hermes os servidores `cua-driver-windows`, `torrentclaw`, `playwright` e `qbittorrent`. O Playwright MCP roda em um contêiner Chromium headless interno, acessível apenas pela rede Docker do Umbrel. O bridge seguro do qBittorrent e a skill de operação do Blink são copiados de `hermes/` para o volume persistente do agente. O mesmo bootstrap configura a cadeia de modelos `GPT 5.6 Luna → NVIDIA GPT-OSS 120B → Ollama local`.
 
 ```powershell
 Copy-Item .env.example .env
@@ -142,7 +150,7 @@ Copy-Item .env.example .env
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./scripts/setup-hermes-mcps.ps1
 ```
 
-O script é idempotente: atualiza os assets, recria os registros MCP, configura os modelos, reinicia o Hermes pelo Umbrel e testa os três servidores. Use `-SkipRestart` ou `-SkipTests` quando precisar executar apenas parte da rotina.
+O script é idempotente: atualiza os assets, recria os registros MCP, configura os modelos, reinicia o Hermes pelo Umbrel e testa os quatro servidores. Use `-SkipRestart` ou `-SkipTests` quando precisar executar apenas parte da rotina.
 
 O fallback do Hermes é por turno. Em rate limit, sobrecarga ou falha de conexão, ele percorre NVIDIA e Ollama na ordem. No início do próximo turno, após o cooldown nativo de 60 segundos, tenta novamente o modelo principal; isso recupera o GPT antes do limite de uma hora sem criar chamadas artificiais que gastariam tokens.
 

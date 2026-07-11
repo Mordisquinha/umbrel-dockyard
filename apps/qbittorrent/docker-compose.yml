@@ -1,12 +1,13 @@
 version: "3.7"
 services:
   app_proxy:
+    restart: always
     environment:
-      APP_HOST: qbittorrent_server_1
+      APP_HOST: qBittorrent
       APP_PORT: 8080
       PROXY_AUTH_ADD: "true"
       PROXY_AUTH_WHITELIST: /api/*
-    container_name: qbittorrent_app_proxy_1
+    container_name: qBittorrent-Proxy
     volumes:
       - /c/umbrel:/shared
   server:
@@ -21,5 +22,5 @@ services:
       - ${UMBREL_ROOT}/home/Videos/Series:/media/Series
       - ${UMBREL_ROOT}/home/Videos/Animes:/media/Animes
       - /c/umbrel:/shared
-    restart: on-failure
-    container_name: qbittorrent_server_1
+    restart: always
+    container_name: qBittorrent

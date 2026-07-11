@@ -1,11 +1,12 @@
 version: "3.7"
 services:
   app_proxy:
+    restart: always
     environment:
-      APP_HOST: ollama_ollama_1
+      APP_HOST: Ollama
       APP_PORT: 11434
       PROXY_AUTH_ADD: "false"
-    container_name: ollama_app_proxy_1
+    container_name: Ollama-Proxy
     volumes:
       - /c/umbrel:/shared
   ollama:
@@ -18,5 +19,5 @@ services:
       - ${APP_DATA_DIR}/data:/root/.ollama
       - C:\SecondBrain:/SecondBrain
       - /c/umbrel:/shared
-    restart: on-failure
-    container_name: ollama_ollama_1
+    restart: always
+    container_name: Ollama
