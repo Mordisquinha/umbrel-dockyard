@@ -40,7 +40,41 @@ services:
     networks:
       - umbrel_main_network
 
+  linkedin:
+    build:
+      context: ..
+      dockerfile: mcp-servers/linkedin-mcp-pro.Dockerfile
+    image: linkedin-mcp-pro:2.3.9
+    container_name: MCP-LinkedIn
+    restart: always
+    environment:
+      LI_AT_FILE: /run/secrets/linkedin_li_at
+      JSESSIONID_FILE: /run/secrets/linkedin_jsessionid
+      DB_PATH: /app/data/linkedin-mcp-pro.db
+      BROWSER_PROFILE_DIR: /app/data/browser-profile
+    volumes:
+      - C:\Umbrel\app-data\mcp-servers\linkedin\data:/app/data
+    secrets:
+      - linkedin_li_at
+      - linkedin_jsessionid
+    expose:
+      - "8765"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8765/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - umbrel_main_network
+
 networks:
   umbrel_main_network:
     external: true
     name: umbrel_main_network
+
+secrets:
+  linkedin_li_at:
+    file: C:\Umbrel\app-data\mcp-servers\secrets\linkedin_li_at
+  linkedin_jsessionid:
+    file: C:\Umbrel\app-data\mcp-servers\secrets\linkedin_jsessionid

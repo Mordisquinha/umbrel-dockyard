@@ -134,7 +134,7 @@ Construído para quem prefere hospedar a própria galáxia. ✨
 
 ## MCPs isolados
 
-Os MCPs que precisam de containers ficam na instância Compose `mcp-servers`, separada da pilha Umbrel: `MCP-Playwright` e `MCP-Senado-BR`. Os MCPs por processo local continuam sob responsabilidade do `Hermes-Agent`.
+Os MCPs que precisam de containers ficam na instância Compose `mcp-servers`, separada da pilha Umbrel: `MCP-Playwright`, `MCP-Senado-BR` e `MCP-LinkedIn`. Os MCPs por processo local continuam sob responsabilidade do `Hermes-Agent`.
 
 ```powershell
 docker compose -f ./mcp-servers/docker-compose.yml up -d

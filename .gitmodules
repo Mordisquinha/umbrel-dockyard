@@ -1,3 +1,6 @@
 [submodule "vendor/pocket-tts"]
 	path = vendor/pocket-tts
 	url = https://github.com/kyutai-labs/pocket-tts.git
+[submodule "vendor/linkedin-mcp-pro"]
+	path = vendor/linkedin-mcp-pro
+	url = https://github.com/horizonbymuneeb/linkedin-mcp-pro.git

@@ -96,6 +96,8 @@ $PlaywrightMcpContainer = Get-Setting -Name PLAYWRIGHT_MCP_CONTAINER -Default 'M
 $PlaywrightMcpUrl = Get-Setting -Name PLAYWRIGHT_MCP_URL -Default 'http://MCP-Playwright:8931/mcp'
 $SenadoMcpContainer = Get-Setting -Name SENADO_MCP_CONTAINER -Default 'MCP-Senado-BR'
 $SenadoMcpUrl = Get-Setting -Name SENADO_MCP_URL -Default 'http://MCP-Senado-BR:8000/mcp'
+$LinkedinMcpContainer = Get-Setting -Name LINKEDIN_MCP_CONTAINER -Default 'MCP-LinkedIn'
+$LinkedinMcpUrl = Get-Setting -Name LINKEDIN_MCP_URL -Default 'http://MCP-LinkedIn:8765/mcp'
 
 $HermesPrimaryProvider = Get-Setting -Name HERMES_PRIMARY_PROVIDER -Default 'openai-codex'
 $HermesPrimaryModel = Get-Setting -Name HERMES_PRIMARY_MODEL -Default 'gpt-5.6-luna'
@@ -125,6 +127,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Docker is unavailable.' }
 Test-ContainerRunning -Name $script:HermesContainer
 Test-ContainerRunning -Name $PlaywrightMcpContainer
 Test-ContainerRunning -Name $SenadoMcpContainer
+Test-ContainerRunning -Name $LinkedinMcpContainer
 if (-not $SkipRestart) { Test-ContainerRunning -Name $UmbrelContainer }
 
 Write-Host '[2/7] Installing versioned Hermes assets...'
@@ -178,6 +181,12 @@ Remove-McpIfPresent -Name 'senado-br'
 Invoke-Docker -Arguments @(
     'exec', '-i', $script:HermesContainer, $script:HermesCli, 'mcp', 'add', 'senado-br',
     '--url', $SenadoMcpUrl
+) -InputText "n`ny"
+
+Remove-McpIfPresent -Name 'linkedin'
+Invoke-Docker -Arguments @(
+    'exec', '-i', $script:HermesContainer, $script:HermesCli, 'mcp', 'add', 'linkedin',
+    '--url', $LinkedinMcpUrl
 ) -InputText "n`ny"
 
 Remove-McpIfPresent -Name 'qbittorrent'
@@ -234,7 +243,7 @@ if (-not $SkipTests) {
             throw "Model routing validation failed: '$expected' is missing."
         }
     }
-    foreach ($server in @('cua-driver-windows', 'torrentclaw', 'playwright', 'senado-br', 'qbittorrent')) {
+    foreach ($server in @('cua-driver-windows', 'torrentclaw', 'playwright', 'senado-br', 'linkedin', 'qbittorrent')) {
         Write-Host "      Testing $server..."
         $testResult = Invoke-Docker -Arguments @(
             'exec', $script:HermesContainer, $script:HermesCli, 'mcp', 'test', $server
